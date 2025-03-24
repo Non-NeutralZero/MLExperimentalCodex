@@ -10,3 +10,9 @@ The network reduces 784-dimensional MNIST images to a 30-dimensional code space 
 ```bash
 python hae.py --epochs 100 --batch-size 256 --device cuda --save-model --output-dir ./hae_results
 ```
+## PCA Comparison
+A script to compare the autoencoder's performance against PCA and Logistic PCA.
+
+```bash
+python hae_pca.py --n-components 30 --device cuda --batch-size 128 --output-dir ./hae_pca_results
+```
