@@ -26,6 +26,5 @@ Walter Reade and Elizabeth Park. Binary Prediction with a Rainfall Dataset. http
 
 ## TECHNICAL CONSIDERATIONS
 - Feature distributions in synthetic data approximate but do not exactly match original dataset
-- Dual-dataset approach encouraged: combining synthetic competition data with original dataset may improve performance
+- Dual-dataset approach: combining synthetic competition data with original dataset may improve performance (either as extra rows or extra columns)
 - Competition designed for rapid experimentation with models and feature engineering techniques
-
