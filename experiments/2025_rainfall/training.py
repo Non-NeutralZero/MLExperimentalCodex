@@ -232,3 +232,97 @@ class LogisticRegressionTrainer:
         print(f"[{self.model_name}] Mean CV AUC: {np.mean(scores):.4f}")
         print(f"[{self.model_name}] Std CV AUC: {np.std(scores):.4f}")
         return scores
+
+
+class GBDTTrainer:
+    def __init__(self, X, y, model_name="XGBoost"):
+        self.model_name = model_name
+        self.X = X.copy()
+        self.X_for_train = X.drop("year", axis=1).reset_index(drop=True)
+        self.y = y.reset_index(drop=True)
+        self.best_model = None
+        self.feature_names = X.drop("year", axis=1).columns
+
+    def train(self):
+        print(f"\n=== Training {self.model_name} ===")
+        start_time = time.time()
+        
+        model = xgb.XGBClassifier(
+            objective="binary:logistic",
+            eval_metric="auc",
+            use_label_encoder=False,
+            random_state=42
+        )
+
+        param_dist = {
+            "n_estimators": randint(50, 300),
+            "max_depth": randint(3, 10),
+            "learning_rate": uniform(0.01, 0.2),
+            "subsample": uniform(0.6, 0.4),
+            "colsample_bytree": uniform(0.6, 0.4)
+        }
+
+        n_splits = self.X["year"].nunique()
+        tscv = TimeSeriesSplit(n_splits=n_splits)
+
+        search = RandomizedSearchCV(
+            model,
+            param_distributions=param_dist,
+            n_iter=30,
+            scoring="roc_auc",
+            cv=tscv,
+            verbose=1,
+            n_jobs=-1,
+            random_state=42
+        )
+        
+        search.fit(self.X_for_train, self.y)
+        self.best_model = search.best_estimator_
+        
+        elapsed_time = time.time() - start_time
+        print(f"[{self.model_name}] Training completed in {elapsed_time:.2f} seconds")
+        print(f"[{self.model_name}] Best Parameters: {search.best_params_}")
+        print(f"[{self.model_name}] Best CV Score: {search.best_score_:.4f}")
+        
+        feature_importance = pd.DataFrame({
+            "Feature": self.feature_names,
+            "Importance": self.best_model.feature_importances_
+        }).sort_values("Importance", ascending=False)
+        print(f"\n[{self.model_name}] Feature Importance:")
+        print(feature_importance.head(10)) 
+        
+        return self.best_model
+    
+    def evaluate_cv(self, reporter):
+        print(f"\n=== Evaluating {self.model_name} with Cross-Validation ===")
+        n_splits = self.X["year"].nunique()
+        tscv = TimeSeriesSplit(n_splits=n_splits)
+
+        scores = []
+        for fold, (train_idx, val_idx) in enumerate(tscv.split(self.X)):
+            X_val = self.X_for_train.iloc[val_idx]
+            y_val = self.y.iloc[val_idx]
+            y_pred_proba = self.best_model.predict_proba(X_val)[:, 1]
+            y_pred_class = (y_pred_proba >= 0.5).astype(int)
+
+            score = roc_auc_score(y_val, y_pred_proba)
+            scores.append(score)
+
+            precision = precision_score(y_val, y_pred_class)
+            recall = recall_score(y_val, y_pred_class)
+            f1 = f1_score(y_val, y_pred_class)
+
+            cm = confusion_matrix(y_val, y_pred_class)
+            disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+            fig, ax = plt.subplots()
+            disp.plot(ax=ax)
+            ax.set_title(f"[{self.model_name}] Fold {fold + 1}")
+
+            reporter.log_confusion_matrix(self.model_name, fold + 1, fig, precision, recall, f1)
+            plt.close(fig)
+
+        print(f"[{self.model_name}] CV AUC scores: {[f"{s:.4f}" for s in scores]}")
+        print(f"[{self.model_name}] Mean CV AUC: {np.mean(scores):.4f}")
+        print(f"[{self.model_name}] Std CV AUC: {np.std(scores):.4f}")
+        return scores            
+
