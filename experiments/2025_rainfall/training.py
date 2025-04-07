@@ -51,6 +51,35 @@ class DataHandler:
         y = data["rainfall"]
         return X, y
 
+    def add_interaction_features(self, X):
+        X_interactions = X.copy()
+        feature_pairs = list(combinations(original_features, 2))
+        print(f"Adding {len(feature_pairs)} interaction features")
+        
+        for col1, col2 in feature_pairs:
+            interaction_name = f"{col1}_{col2}"
+            X_interactions[interaction_name] = X[col1] * X[col2]
+        
+        return X_interactions
+
+    def add_shif_features(self, X, shifts=[1, 3], features=None):
+        X_shifted = X.copy()
+        X_shifted = X_shifted.sort_index()
+        
+        if features is None:
+            features = [col for col in X.columns if col != "year"]
+        
+        total_new_features = 0
+        for shift in shifts:
+            for feature in features:
+                shift_name = f"{feature}_lag_{shift}"
+                X_shifted[shift_name] = X_shifted[feature].shift(shift)
+                total_new_features += 1
+        
+        X_shifted = X_shifted.fillna(0)
+        print(f"Added {total_new_features} shift features")
+        return X_shifted
+
     def get_test_features(self):
         data = self.test.sort_values("id").reset_index(drop=True)
         X = data.drop(["id"], axis=1).fillna(0)
