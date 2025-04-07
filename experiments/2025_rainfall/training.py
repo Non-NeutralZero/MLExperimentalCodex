@@ -139,3 +139,96 @@ class RFECVSelector:
         
         return X_selected
 
+class LogisticRegressionTrainer:
+    def __init__(self, X, y, model_name="LogisticRegression"):
+        self.model_name = model_name
+        self.scaler = StandardScaler()
+        self.X_unscaled = X.copy()
+        self.X = pd.DataFrame(
+            self.scaler.fit_transform(X.drop("year", axis=1)),
+            columns=X.drop("year", axis=1).columns
+        )
+        self.X["year"] = X["year"].values
+        self.y = y.reset_index(drop=True)
+        self.best_model = None
+        self.feature_names = X.drop("year", axis=1).columns
+
+    def train(self):
+        print(f"\n=== Training {self.model_name} ===")
+        start_time = time.time()
+        
+        param_dist = {
+            "C": uniform(0.001, 10),
+            "penalty": ["l1", "l2", "elasticnet"],
+            "solver": ["saga"],
+            "l1_ratio": uniform(0, 1)
+        }
+
+        n_splits = self.X_unscaled["year"].nunique()
+        tscv = TimeSeriesSplit(n_splits=n_splits)
+
+        search = RandomizedSearchCV(
+            LogisticRegression(max_iter=1000, random_state=42),
+            param_distributions=param_dist,
+            n_iter=30,
+            scoring="roc_auc",
+            cv=tscv,
+            verbose=1,
+            n_jobs=-1,
+            random_state=42
+        )
+        
+        X_train = self.X.drop("year", axis=1)
+        search.fit(X_train, self.y)
+        self.best_model = search.best_estimator_
+        
+        elapsed_time = time.time() - start_time
+        print(f"[{self.model_name}] Training completed in {elapsed_time:.2f} seconds")
+        print(f"[{self.model_name}] Best Parameters: {search.best_params_}")
+        print(f"[{self.model_name}] Best CV Score: {search.best_score_:.4f}")
+        
+        if hasattr(self.best_model, "coef_"):
+            coefficients = self.best_model.coef_[0]
+            feature_importance = pd.DataFrame({
+                "Feature": self.feature_names,
+                "Importance": np.abs(coefficients)
+            }).sort_values("Importance", ascending=False)
+            print(f"\n[{self.model_name}] Feature Importance:")
+            print(feature_importance.head(10))
+        
+        return self.best_model
+
+    def evaluate_cv(self, reporter):
+        print(f"\n=== Evaluating {self.model_name} with Cross-Validation ===")
+        n_splits = self.X_unscaled["year"].nunique()
+        tscv = TimeSeriesSplit(n_splits=n_splits)
+
+        scores = []
+        X_for_cv = self.X.drop("year", axis=1)
+        
+        for fold, (train_idx, val_idx) in enumerate(tscv.split(self.X_unscaled)):
+            X_val = X_for_cv.iloc[val_idx]
+            y_val = self.y.iloc[val_idx]
+            y_pred_proba = self.best_model.predict_proba(X_val)[:, 1]
+            y_pred_class = (y_pred_proba >= 0.5).astype(int)
+
+            score = roc_auc_score(y_val, y_pred_proba)
+            scores.append(score)
+
+            precision = precision_score(y_val, y_pred_class)
+            recall = recall_score(y_val, y_pred_class)
+            f1 = f1_score(y_val, y_pred_class)
+
+            cm = confusion_matrix(y_val, y_pred_class)
+            disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+            fig, ax = plt.subplots()
+            disp.plot(ax=ax)
+            ax.set_title(f"[{self.model_name}] Fold {fold + 1}")
+
+            reporter.log_confusion_matrix(self.model_name, fold + 1, fig, precision, recall, f1)
+            plt.close(fig)
+
+        print(f"[{self.model_name}] CV AUC scores: {[f"{s:.4f}" for s in scores]}")
+        print(f"[{self.model_name}] Mean CV AUC: {np.mean(scores):.4f}")
+        print(f"[{self.model_name}] Std CV AUC: {np.std(scores):.4f}")
+        return scores
