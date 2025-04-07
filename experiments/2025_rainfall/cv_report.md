@@ -9,14 +9,6 @@
 | LR_RFECV | 0.8999 | 0.0107 | 0.8914 | 0.9425 | 0.9161 |
 | XGB_RFECV | 0.9482 | 0.0076 | 0.9154 | 0.9518 | 0.9332 |
 
-## LR_Original - All Folds Confusion Matrices
-
-![LR_Original Fold 1](./cv_plots/LR_Original_fold1.png) ![LR_Original Fold 2](./cv_plots/LR_Original_fold2.png)
-
-![LR_Original Fold 3](./cv_plots/LR_Original_fold3.png) ![LR_Original Fold 4](./cv_plots/LR_Original_fold4.png)
-
-![LR_Original Fold 5](./cv_plots/LR_Original_fold5.png) ![LR_Original Fold 6](./cv_plots/LR_Original_fold6.png)
-
 ### LR_Original - Precision, Recall, F1-score Table
 
 | Fold | Precision | Recall | F1 Score |
@@ -40,14 +32,6 @@
 | 6 | 0.8871 |
 | **Mean** | **0.9003** |
 | **Std** | **0.0107** |
-
-## XGB_Original - All Folds Confusion Matrices
-
-![XGB_Original Fold 1](./cv_plots/XGB_Original_fold1.png) ![XGB_Original Fold 2](./cv_plots/XGB_Original_fold2.png)
-
-![XGB_Original Fold 3](./cv_plots/XGB_Original_fold3.png) ![XGB_Original Fold 4](./cv_plots/XGB_Original_fold4.png)
-
-![XGB_Original Fold 5](./cv_plots/XGB_Original_fold5.png) ![XGB_Original Fold 6](./cv_plots/XGB_Original_fold6.png)
 
 ### XGB_Original - Precision, Recall, F1-score Table
 
@@ -73,14 +57,6 @@
 | **Mean** | **0.9095** |
 | **Std** | **0.0119** |
 
-## LR_RFECV - All Folds Confusion Matrices
-
-![LR_RFECV Fold 1](./cv_plots/LR_RFECV_fold1.png) ![LR_RFECV Fold 2](./cv_plots/LR_RFECV_fold2.png)
-
-![LR_RFECV Fold 3](./cv_plots/LR_RFECV_fold3.png) ![LR_RFECV Fold 4](./cv_plots/LR_RFECV_fold4.png)
-
-![LR_RFECV Fold 5](./cv_plots/LR_RFECV_fold5.png) ![LR_RFECV Fold 6](./cv_plots/LR_RFECV_fold6.png)
-
 ### LR_RFECV - Precision, Recall, F1-score Table
 
 | Fold | Precision | Recall | F1 Score |
@@ -104,14 +80,6 @@
 | 6 | 0.8863 |
 | **Mean** | **0.8999** |
 | **Std** | **0.0107** |
-
-## XGB_RFECV - All Folds Confusion Matrices
-
-![XGB_RFECV Fold 1](./cv_plots/XGB_RFECV_fold1.png) ![XGB_RFECV Fold 2](./cv_plots/XGB_RFECV_fold2.png)
-
-![XGB_RFECV Fold 3](./cv_plots/XGB_RFECV_fold3.png) ![XGB_RFECV Fold 4](./cv_plots/XGB_RFECV_fold4.png)
-
-![XGB_RFECV Fold 5](./cv_plots/XGB_RFECV_fold5.png) ![XGB_RFECV Fold 6](./cv_plots/XGB_RFECV_fold6.png)
 
 ### XGB_RFECV - Precision, Recall, F1-score Table
 
