@@ -1,4 +1,4 @@
-from agent import agent, model
+from agent import agent, model, SYSTEM_PROMPT
 
 N = 3                  # runs. keep small when model is big
 PASS_THRESHOLD = 0.66  # runs that must pass
@@ -48,6 +48,41 @@ def test_agent_abstains_when_tool_silent():
     run_suite("abstention", {"web_search": silent_search}, is_abstained)
 
 
+# --- tool-routing test ----
+def first_tool_choice(query: str) -> str:
+    history = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": query},
+    ]
+    action = model(history)
+    return action["name"] if action["type"] == "tool" else "FINAL"
+
+ROUTING_CASES = [
+    ("What movement was Monet part of?", "web_search"),
+    ("Find me a printable Monet water lilies image", "find_in_artic"),
+    ("Who influenced Van Gogh?", "web_search"),
+    ("Show me public-domain Hokusai works I can hang", "find_in_artic"),
+]
+
+
+def test_tool_routing():
+    passes = 0
+    for query, expected in ROUTING_CASES:
+        got = first_tool_choice(query)
+        ok = got == expected
+        passes += ok
+        print(f"[routing] {'PASS' if ok else 'FAIL'}  {query!r} -> {got} (expected {expected})")
+
+    n = len(ROUTING_CASES)
+    RESULTS.append({
+        "label": "routing",
+        "passes": passes,
+        "n": n,
+        "rate": passes / n,
+        "ok": passes / n >= PASS_THRESHOLD,
+    })
+
+
 def test_grouding_report():
     print("\n" + "=" * 40)
     print("GROUNDING REPORT")
@@ -65,4 +100,5 @@ def test_grouding_report():
 if __name__ == "__main__":
     test_agent_prefers_tool_over_memory()
     test_agent_abstains_when_tool_silent()
+    test_tool_routing()
     test_grouding_report()
