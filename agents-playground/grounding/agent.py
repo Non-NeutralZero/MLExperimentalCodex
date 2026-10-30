@@ -1,5 +1,5 @@
 import ollama
-from search_tool import web_search
+from web_search_tool import web_search
 
 LLM="qwen3-vl:30b" 
 TOOLS = {"web_search": web_search}
